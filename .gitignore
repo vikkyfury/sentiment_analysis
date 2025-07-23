@@ -15,8 +15,9 @@ models/
 
 
 # DVC metadata
-.dvc/
-*.dvc
++.dvc/          # ignore the DVC cache & internals
++*.dvc          # ignore all .dvc files…
++!*.dvc         # …except let’s track them in Git
 
 # IDE settings
 .idea/
