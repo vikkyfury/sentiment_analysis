@@ -9,8 +9,10 @@ env/
 *.env
 
 # Data & models (DVC will manage)
-data/
+# ignore processed data and models, but track raw data pointer
+data/processed/
 models/
+
 
 # DVC metadata
 .dvc/
