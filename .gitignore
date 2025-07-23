@@ -1,0 +1,20 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Environments
+.venv/
+env/
+*.env
+
+# Data & models (DVC will manage)
+data/
+models/
+
+# DVC metadata
+.dvc/
+*.dvc
+
+# IDE settings
+.idea/
