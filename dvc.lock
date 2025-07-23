@@ -1,0 +1,19 @@
+schema: '2.0'
+stages:
+  ingest:
+    cmd: python src/data_ingest.py
+    deps:
+    - path: data/raw
+      hash: md5
+      md5: 100c2df25d126e6ba9eca815eeedaa59.dir
+      size: 27784467
+      nfiles: 3
+    - path: src/data_ingest.py
+      hash: md5
+      md5: cffc16c1fd4f84a11f49f9a252a2c0d9
+      size: 1377
+    outs:
+    - path: data/processed/cleaned_data.csv
+      hash: md5
+      md5: 95116c48146eae5d64e15b7fa3327bac
+      size: 20540268
