@@ -33,15 +33,18 @@ jobs:
 
       - name: Pull data & run pipeline
         run: |
+          cd sentiment_analysis
           dvc pull --quiet
           dvc repro --force
 
       - name: Run tests
         run: |
+          cd sentiment_analysis
           pytest --maxfail=1 --disable-warnings -q
 
       - name: Build Docker image
         run: |
+          cd sentiment_analysis
           docker build -t sentiment-api:${{ github.sha }} .
 
       # Optional: Push to Docker Hub (requires registry secrets)
