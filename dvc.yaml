@@ -1,0 +1,15 @@
+stages:
+  ingest:
+    cmd: python src/data_ingest.py
+    deps:
+      - src/data_ingest.py
+      - data/raw
+    outs:
+      - data/processed/cleaned_data.csv
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - data/processed/cleaned_data.csv
+

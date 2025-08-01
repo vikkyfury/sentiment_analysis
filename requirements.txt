@@ -5,3 +5,6 @@ mlflow
 dvc
 flask       # or fastapi
 pytest
+kaggle
+pydantic
+pathlib

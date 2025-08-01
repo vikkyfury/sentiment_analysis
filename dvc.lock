@@ -17,3 +17,14 @@ stages:
       hash: md5
       md5: 95116c48146eae5d64e15b7fa3327bac
       size: 20540268
+  train:
+    cmd: python src/train.py
+    deps:
+    - path: data/processed/cleaned_data.csv
+      hash: md5
+      md5: 95116c48146eae5d64e15b7fa3327bac
+      size: 20540268
+    - path: src/train.py
+      hash: md5
+      md5: 2476547e91fb9a8bf3c896b7200196d6
+      size: 2081
