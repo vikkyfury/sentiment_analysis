@@ -1,3 +1,5 @@
+# .github/workflows/ci.yml
+
 name: CI
 
 on:
@@ -10,49 +12,55 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # 1) Tell Actions where to find mlruns
+    # 1) point MLflow at your local mlruns directory in the repo
     env:
-      MLFLOW_TRACKING_URI: file://${{ github.workspace }}/mlruns
+      MLFLOW_TRACKING_URI: file://${{ github.workspace }}/sentiment_analysis/mlruns
 
-    # 2) Run all steps from repo root
+    # 2) every `run:` will execute from the `sentiment_analysis` folder
     defaults:
       run:
-        working-directory: ./
+        working-directory: ./sentiment_analysis
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: true
+      # 3) Check out the code (incl. your DVC config)
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.9"
+      # 4) Install Python
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install "dvc[all]" pytest flask mlflow
+      # 5) Install your project’s deps + DVC, pytest, etc.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "dvc[all]" pytest flask mlflow
 
-    - name: Configure DVC AWS credentials
-      run: |
-        dvc remote modify --local storage access_key_id     ${{ secrets.AWS_ACCESS_KEY_ID }}
-        dvc remote modify --local storage secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      # 6) Configure your DVC S3 remote with GitHub secrets
+      - name: Configure DVC AWS credentials
+        run: |
+          dvc remote modify --local storage access_key_id     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          dvc remote modify --local storage secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-    - name: Pull data & run pipeline
-      run: |
-        dvc pull --quiet
-        dvc repro --force
+      # 7) Pull your raw data and run the full DVC pipeline (incl. src/train.py)
+      - name: Pull data & reproduce pipeline
+        run: |
+          dvc pull --quiet
+          dvc repro --force
 
-    - name: Run tests
-      run: |
-        pytest --maxfail=1 --disable-warnings -q
+      # 8) Run your test suite
+      - name: Run tests
+        run: pytest --maxfail=1 --disable-warnings -q
 
-    - name: Build Docker image
-      run: |
-        docker build -t sentiment-api:${{ github.sha }} .
+      # 9) Build your Flask/MLflow container
+      - name: Build Docker image
+        run: docker build -t sentiment-api:${{ github.sha }} .
 
-    - name: Archive model image tag
-      run: |
-        echo "Image built: sentiment-api:${{ github.sha }}"
+      # 10) Surface the image tag in the logs
+      - name: Archive model image tag
+        run: |
+          echo "Image built: sentiment-api:${{ github.sha }}"
