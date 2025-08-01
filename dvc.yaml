@@ -14,3 +14,12 @@ stages:
       - data/processed/cleaned_data.csv
     outs:
       - models/latest
+
+  evaluate:
+    cmd: python src/evaluate.py --model-dir models/latest --data data/processed/cleaned_data.csv --out metrics.json
+    deps:
+      - src/evaluate.py
+      - models/latest
+      - data/processed/cleaned_data.csv
+    metrics:
+      - metrics.json
