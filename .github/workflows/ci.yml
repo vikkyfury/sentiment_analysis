@@ -26,16 +26,23 @@ jobs:
           pip install -r requirements.txt
           pip install "dvc[all]" pytest flask mlflow
 
+      - name: Configure DVC AWS credentials
+        run: |
+          dvc remote modify --local storage access_key_id     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          dvc remote modify --local storage secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
       - name: Pull data & run pipeline
         run: |
           dvc pull --quiet
           dvc repro --force
 
       - name: Run tests
-        run: pytest --maxfail=1 --disable-warnings -q
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
 
       - name: Build Docker image
-        run: docker build -t sentiment-api:${{ github.sha }} .
+        run: |
+          docker build -t sentiment-api:${{ github.sha }} .
 
       # Optional: Push to Docker Hub (requires registry secrets)
       # - name: Log in to Docker Hub
