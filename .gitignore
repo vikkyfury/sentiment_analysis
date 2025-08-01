@@ -20,7 +20,7 @@ data/processed/
 # DVC internals & caches
 .dvc/
 *.dvc
-dvc.lock
+
 
 # MLflow experiment logs
 mlruns/

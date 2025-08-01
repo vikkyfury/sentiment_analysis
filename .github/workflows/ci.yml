@@ -9,49 +9,61 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # Pass AWS creds/region to all steps (DVC/boto3 will read these)
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
-      # 1) Check out the code
-      - uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      # 2) Set up Python
       - name: Set up Python 3.9
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.9"
 
-      # 3) Install dependencies
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install "dvc[all]" pytest flask mlflow
+          # Install the S3 extra for DVC; lighter and sufficient
+          pip install "dvc[s3]" pytest flask mlflow
 
-      # 4) Configure DVC AWS credentials (so dvc pull works)
-      - name: Configure DVC AWS credentials
+      # Optional sanity; helps surface config in logs
+      - name: DVC diagnostics
         run: |
-          dvc remote modify --local storage access_key_id     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          dvc remote modify --local storage secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          python -V
+          dvc --version
+          dvc remote list
+          echo "--- .dvc/config ---"
+          cat .dvc/config || true
 
-      # 5) Pull data & reproduce pipeline (includes running src/train.py)
-      - name: Pull data & run pipeline
+      - name: Pull data & run pipeline (verbose)
         run: |
-          dvc pull --quiet
-          dvc repro --force
+          set -euxo pipefail
+          dvc pull -v
+          dvc repro -v --force
 
-      # 6) Run your pytest suite
       - name: Run tests
         run: |
           pytest --maxfail=1 --disable-warnings -q
 
-      # 7) Build the Docker image
       - name: Build Docker image
         run: |
           docker build -t sentiment-api:${{ github.sha }} .
 
-      # 8) Archive the image tag for logs
       - name: Archive model image tag
         run: |
           echo "Image built: sentiment-api:${{ github.sha }}"
