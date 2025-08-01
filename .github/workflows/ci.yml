@@ -10,14 +10,6 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # If you don’t need the DVC container service, you can delete this entire block.
-    # Keep it only if you have a very custom DVC setup.
-    #services:
-    #  dvc-cache:
-    #    image: docker.io/iterativeai/dvc:2
-    #    options: --entrypoint tail
-    #    # (Removed the invalid `command:` key)
-
     steps:
       - uses: actions/checkout@v3
         with:
@@ -30,26 +22,20 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install dvc[all] pytest flask mlflow
+          pip install "dvc[all]" pytest flask mlflow
 
       - name: Pull data & run pipeline
         run: |
-          source .venv/bin/activate
           dvc pull --quiet
           dvc repro --force
 
       - name: Run tests
-        run: |
-          source .venv/bin/activate
-          pytest --maxfail=1 --disable-warnings -q
+        run: pytest --maxfail=1 --disable-warnings -q
 
       - name: Build Docker image
-        run: |
-          docker build -t sentiment-api:${{ github.sha }} .
+        run: docker build -t sentiment-api:${{ github.sha }} .
 
       # Optional: Push to Docker Hub (requires registry secrets)
       # - name: Log in to Docker Hub
