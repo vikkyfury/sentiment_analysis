@@ -10,6 +10,10 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    # Point MLflow at a workspace-local path in CI
+    env:
+      MLFLOW_TRACKING_URI: file://$GITHUB_WORKSPACE/mlruns
+
     steps:
       - uses: actions/checkout@v3
         with:
