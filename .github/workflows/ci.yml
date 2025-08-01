@@ -1,61 +1,66 @@
+# .github/workflows/ci.yml
 name: CI
 
 on:
-  push:        { branches: [ main ] }
-  pull_request:{ branches: [ main ] }
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    # point MLflow at your local mlruns folder
     env:
-      # point MLflow to the mlruns folder inside your subfolder
       MLFLOW_TRACKING_URI: file://${{ github.workspace }}/sentiment_analysis/mlruns
 
     steps:
-      # 1) checkout
+      # 1) Check out the code
       - uses: actions/checkout@v3
-        with: { submodules: true }
+        with:
+          submodules: true
 
-      # 2) setup Python
+      # 2) Set up Python
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
-        with: { python-version: "3.9" }
+        with:
+          python-version: "3.9"
 
-      # 3) install deps
+      # 3) Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install "dvc[all]" pytest flask mlflow
 
-      # 4) configure DVC creds
+      # 4) Configure DVC AWS credentials
       - name: Configure DVC AWS credentials
         run: |
           cd sentiment_analysis
           dvc remote modify --local storage access_key_id     ${{ secrets.AWS_ACCESS_KEY_ID }}
           dvc remote modify --local storage secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      # 5) pull data & repro
+      # 5) Pull data & reproduce pipeline
       - name: Pull data & run pipeline
         run: |
           cd sentiment_analysis
           dvc pull --quiet
           dvc repro --force
 
-      # 6) tests
+      # 6) Run tests
       - name: Run tests
         run: |
           cd sentiment_analysis
           pytest --maxfail=1 --disable-warnings -q
 
-      # 7) Docker build
+      # 7) Build Docker image
       - name: Build Docker image
         run: |
           cd sentiment_analysis
           docker build -t sentiment-api:${{ github.sha }} .
 
-      # 8) report
+      # 8) Archive model image tag
       - name: Archive model image tag
         run: |
           echo "Image built: sentiment-api:${{ github.sha }}"
