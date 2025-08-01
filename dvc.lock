@@ -34,3 +34,25 @@ stages:
       md5: 9a689ec76d4d10f7cbce299d8a9c6609.dir
       size: 224076
       nfiles: 5
+  evaluate:
+    cmd: python src/evaluate.py --model-dir models/latest --data 
+      data/processed/cleaned_data.csv --out metrics.json
+    deps:
+    - path: data/processed/cleaned_data.csv
+      hash: md5
+      md5: 95116c48146eae5d64e15b7fa3327bac
+      size: 20540268
+    - path: models/latest
+      hash: md5
+      md5: 9a689ec76d4d10f7cbce299d8a9c6609.dir
+      size: 224076
+      nfiles: 5
+    - path: src/evaluate.py
+      hash: md5
+      md5: a67d0863cf910ef2ec3053882d626284
+      size: 1397
+    outs:
+    - path: metrics.json
+      hash: md5
+      md5: c75909fb15d1e0dfddc62a334891b421
+      size: 89
