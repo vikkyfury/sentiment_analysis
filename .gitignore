@@ -1,23 +1,35 @@
 # Python artifacts
 __pycache__/
 *.py[cod]
+*.so
 *.egg-info/
 
-# Environments
+# Virtual environments
 .venv/
 env/
+venv/
 *.env
 
-# Data & models (DVC will manage)
-# ignore processed data and models, but track raw data pointer
+# Build / packaging
+build/
+dist/
+
+# DVC-managed data (we track the pointers, not the files)
 data/processed/
+
+# DVC internals & caches
+.dvc/
+*.dvc
+dvc.lock
+
+# MLflow experiment logs
+mlruns/
+
+# Ignore old `models/` if ever created
 models/
 
-
-# DVC metadata
-+.dvc/          # ignore the DVC cache & internals
-+*.dvc          # ignore all .dvc files…
-+!*.dvc         # …except let’s track them in Git
-
-# IDE settings
+# Editor / OS clutter
 .idea/
+.vscode/
+.DS_Store
+Thumbs.db
