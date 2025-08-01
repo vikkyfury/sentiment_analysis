@@ -71,17 +71,41 @@ jobs:
           name: metrics
           path: metrics.json
 
+      - name: Pre-check that model exists before building
+        run: |
+          ls -la models/latest || (echo "models/latest missing – run dvc repro before build" && exit 1)
+          test -f models/latest/MLmodel || (echo "MLmodel file missing" && exit 1)
+
       - name: Build image
         run: docker build -t sentiment-api:${{ github.sha }} .
 
       - name: Smoke test container
         run: |
+          set -euxo pipefail
           docker run -d --rm -p 8000:8000 --name sa sentiment-api:${{ github.sha }}
-          # give server a moment to boot
-          for i in {1..20}; do curl -sf http://localhost:8000/health && break || sleep 1; done
+
+          # Wait up to 60s for /health to respond
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/health >/dev/null; then
+              echo "Service healthy"
+              break
+            fi
+            sleep 1
+          done
+
+          # If still not healthy, show logs and fail
+          if ! curl -sf http://localhost:8000/health >/dev/null; then
+            echo "Service failed to become healthy; container logs:"
+            docker logs sa || true
+            docker ps -a || true
+            exit 1
+          fi
+
+          # Predict endpoint check
           curl -sf -X POST http://localhost:8000/predict \
             -H "Content-Type: application/json" \
             -d '{"texts":["great movie","terrible plot"]}'
+
           docker stop sa
       # Uncomment if you use the evaluate stage
       # - name: Upload metrics
