@@ -10,12 +10,13 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      dvc-cache:
-        image: docker.io/iterativeai/dvc:2
-        options: --entrypoint tail
-        # Keep the container alive so we can use DVC inside the job
-        command: ["-f", "/dev/null"]
+    # If you don’t need the DVC container service, you can delete this entire block.
+    # Keep it only if you have a very custom DVC setup.
+    #services:
+    #  dvc-cache:
+    #    image: docker.io/iterativeai/dvc:2
+    #    options: --entrypoint tail
+    #    # (Removed the invalid `command:` key)
 
     steps:
       - uses: actions/checkout@v3
