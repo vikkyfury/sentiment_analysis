@@ -1,15 +1,17 @@
 name: CI
-
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    # Pass AWS creds/region to all steps (DVC/boto3 will read these)
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -22,7 +24,7 @@ jobs:
         with:
           submodules: true
 
-      - name: Set up Python 3.9
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.9"
@@ -38,32 +40,37 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          # Install the S3 extra for DVC; lighter and sufficient
-          pip install "dvc[s3]" pytest flask mlflow
+          pip install "dvc[s3]" pytest
 
-      # Optional sanity; helps surface config in logs
       - name: DVC diagnostics
         run: |
-          python -V
           dvc --version
-          dvc remote list
-          echo "--- .dvc/config ---"
+          dvc remote list || true
           cat .dvc/config || true
 
-      - name: Pull data & run pipeline (verbose)
+      - name: Pull & run pipeline
         run: |
           set -euxo pipefail
           dvc pull -v
-          dvc repro -v --force
+          dvc checkout -v
+          dvc repro -v --force   # produces models/latest (and metrics.json if you added evaluate)
 
       - name: Run tests
-        run: |
-          pytest --maxfail=1 --disable-warnings -q
+        run: pytest -q
 
-      - name: Build Docker image
-        run: |
-          docker build -t sentiment-api:${{ github.sha }} .
+      - name: Upload trained model (models/latest)
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-latest
+          path: models/latest/
 
-      - name: Archive model image tag
-        run: |
-          echo "Image built: sentiment-api:${{ github.sha }}"
+      # Uncomment if you use the evaluate stage
+      # - name: Upload metrics
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: metrics
+      #     path: metrics.json
+
+      # Optional: Docker build
+      # - name: Build Docker image
+      #   run: docker build -t sentiment-api:${{ github.sha }} .

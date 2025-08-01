@@ -9,6 +9,7 @@ RAW_DIR       = BASE_DIR / "data" / "raw"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 OUTPUT_FILE   = PROCESSED_DIR / "cleaned_data.csv"
 
+
 def load_and_label(path: Path, text_col: str, label_col: str):
     df = pd.read_csv(path)
     df = df.rename(columns={text_col: "clean_comment"})

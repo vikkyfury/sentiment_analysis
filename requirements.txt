@@ -8,3 +8,4 @@ pytest
 kaggle
 pydantic
 pathlib
+pytest
