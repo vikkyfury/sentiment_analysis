@@ -5,13 +5,13 @@ stages:
     deps:
     - path: data/raw
       hash: md5
-      md5: 100c2df25d126e6ba9eca815eeedaa59.dir
+      md5: b437f279ad818738eca6b2044b60a594.dir
       size: 27784467
-      nfiles: 3
+      nfiles: 2
     - path: src/data_ingest.py
       hash: md5
-      md5: cffc16c1fd4f84a11f49f9a252a2c0d9
-      size: 1377
+      md5: b939ff135b129dbea37ada92cb20cb5f
+      size: 1378
     outs:
     - path: data/processed/cleaned_data.csv
       hash: md5
@@ -26,5 +26,11 @@ stages:
       size: 20540268
     - path: src/train.py
       hash: md5
-      md5: 2476547e91fb9a8bf3c896b7200196d6
-      size: 2081
+      md5: d7c5be29e8ae5768db07ab72d2ef3fe6
+      size: 2859
+    outs:
+    - path: models/latest
+      hash: md5
+      md5: 9a689ec76d4d10f7cbce299d8a9c6609.dir
+      size: 224076
+      nfiles: 5
