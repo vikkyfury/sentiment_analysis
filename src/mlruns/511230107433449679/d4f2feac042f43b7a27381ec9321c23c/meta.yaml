@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/vikkyfury/Desktop/Projects/sentiment_analysis/sentiment_analysis/src/mlruns/511230107433449679/d4f2feac042f43b7a27381ec9321c23c/artifacts
+end_time: 1753311152815
+entry_point_name: ''
+experiment_id: '511230107433449679'
+lifecycle_stage: active
+run_id: d4f2feac042f43b7a27381ec9321c23c
+run_name: rebellious-squid-218
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1753311150064
+status: 3
+tags: []
+user_id: vikkyfury

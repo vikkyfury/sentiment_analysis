@@ -1,0 +1,14 @@
+artifact_path: file:///Users/vikkyfury/Desktop/Projects/sentiment_analysis/sentiment_analysis/mlruns/280809254812093423/models/m-a9afc91b722943b0bb211ad1f490fe4b/artifacts
+flavors:
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.6.1
+mlflow_version: 3.1.4
+model_id: m-a9afc91b722943b0bb211ad1f490fe4b
+model_size_bytes: 182446
+model_uuid: m-a9afc91b722943b0bb211ad1f490fe4b
+prompts: null
+run_id: 5a29f794e5c14f6e8c36983626c41ebf
+utc_time_created: '2025-07-23 23:10:07.995328'

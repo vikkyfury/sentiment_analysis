@@ -1,0 +1,28 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+env/
+*.env
+
+# Git repo metadata
+.git/
+
+# DVC and data artifacts
+.dvc/
+data/
+
+# ignore everything mlflow-related
+mlruns/
+
+# include our vendored artifacts
+!prod_model/
+
+# IDE or OS files
+.idea/
+.vscode/
+.DS_Store
