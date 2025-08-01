@@ -1,66 +1,61 @@
-# .github/workflows/ci.yml
-
 name: CI
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  push:        { branches: [ main ] }
+  pull_request:{ branches: [ main ] }
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    # 1) point MLflow at your local mlruns directory in the repo
     env:
+      # point MLflow to the mlruns folder inside your subfolder
       MLFLOW_TRACKING_URI: file://${{ github.workspace }}/sentiment_analysis/mlruns
 
-    # 2) every `run:` will execute from the `sentiment_analysis` folder
-    defaults:
-      run:
-        working-directory: ./sentiment_analysis
-
     steps:
-      # 3) Check out the code (incl. your DVC config)
+      # 1) checkout
       - uses: actions/checkout@v3
-        with:
-          submodules: true
+        with: { submodules: true }
 
-      # 4) Install Python
+      # 2) setup Python
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
+        with: { python-version: "3.9" }
 
-      # 5) Install your project’s deps + DVC, pytest, etc.
+      # 3) install deps
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install "dvc[all]" pytest flask mlflow
 
-      # 6) Configure your DVC S3 remote with GitHub secrets
+      # 4) configure DVC creds
       - name: Configure DVC AWS credentials
         run: |
+          cd sentiment_analysis
           dvc remote modify --local storage access_key_id     ${{ secrets.AWS_ACCESS_KEY_ID }}
           dvc remote modify --local storage secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      # 7) Pull your raw data and run the full DVC pipeline (incl. src/train.py)
-      - name: Pull data & reproduce pipeline
+      # 5) pull data & repro
+      - name: Pull data & run pipeline
         run: |
+          cd sentiment_analysis
           dvc pull --quiet
           dvc repro --force
 
-      # 8) Run your test suite
+      # 6) tests
       - name: Run tests
-        run: pytest --maxfail=1 --disable-warnings -q
+        run: |
+          cd sentiment_analysis
+          pytest --maxfail=1 --disable-warnings -q
 
-      # 9) Build your Flask/MLflow container
+      # 7) Docker build
       - name: Build Docker image
-        run: docker build -t sentiment-api:${{ github.sha }} .
+        run: |
+          cd sentiment_analysis
+          docker build -t sentiment-api:${{ github.sha }} .
 
-      # 10) Surface the image tag in the logs
+      # 8) report
       - name: Archive model image tag
         run: |
           echo "Image built: sentiment-api:${{ github.sha }}"
