@@ -10,27 +10,24 @@ import mlflow
 import mlflow.sklearn
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# ─── 1) Set up a local mlruns folder at the repo root ────────────────────────
-ROOT_DIR    = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-MLRUNS_DIR  = os.path.join(ROOT_DIR, "mlruns")
-# Create it if it doesn’t exist
+# 1) Ensure an `mlruns/` folder exists at your repo root
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+MLRUNS_DIR = os.path.join(ROOT_DIR, "mlruns")
 pathlib.Path(MLRUNS_DIR).mkdir(parents=True, exist_ok=True)
 
-# ─── 2) Point MLflow at that folder ─────────────────────────────────────────
+# 2) Point MLflow at that local folder
 mlflow.set_tracking_uri(f"file://{MLRUNS_DIR}")
 
-# ─── Constants ────────────────────────────────────────────────────────────────
+# Paths & constants
 DATA_PATH  = os.path.join(ROOT_DIR, "data", "processed", "cleaned_data.csv")
 EXPERIMENT = "sentiment_analysis"
-
 
 def load_data(path):
     df = pd.read_csv(path)
     return df["clean_comment"], df["category"]
 
-
 def main():
-    # Ensure the experiment exists (or create it)
+    # Create or switch to our experiment
     mlflow.set_experiment(EXPERIMENT)
 
     # Load & split
@@ -39,7 +36,7 @@ def main():
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    # TF-IDF featurizer
+    # TF-IDF vectorizer
     vect = TfidfVectorizer(max_features=5000)
     X_train_vec = vect.fit_transform(X_train)
     X_test_vec  = vect.transform(X_test)
@@ -68,7 +65,7 @@ def main():
         mlflow.log_metric("accuracy", acc)
         mlflow.log_metric("f1_macro", f1)
 
-        # Log artifacts
+        # Log artifacts (model & vectorizer)
         mlflow.sklearn.log_model(model,       "model")
         mlflow.sklearn.log_model(vect,        "vectorizer")
 
@@ -76,7 +73,6 @@ def main():
             f"[MLflow run={mlflow.active_run().info.run_id}] "
             f"accuracy={acc:.4f}, f1_macro={f1:.4f}"
         )
-
 
 if __name__ == "__main__":
     main()
