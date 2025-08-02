@@ -1,13 +1,10 @@
 FROM python:3.9-slim
 WORKDIR /app
-
-# Install only the Python packages you need
+RUN pip install --no-cache-dir --upgrade pip
 COPY requirements.txt .
-RUN pip install --no-cache-dir flask mlflow scikit-learn pandas
-
-# Copy in your application code AND the vendored model files
-COPY . .
-
-EXPOSE 5000
-CMD ["python", "src/serve.py"]
+RUN pip install --no-cache-dir -r requirements.txt
+COPY src/ ./src/
+COPY models/latest/ ./models/latest/
+EXPOSE 8000
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8000", "src.serve:app"]
 
