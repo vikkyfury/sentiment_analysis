@@ -76,22 +76,40 @@ jobs:
           ls -la models/latest
           test -f models/latest/MLmodel
 
-      - name: Build image
-        run: docker build -t sentiment-api:${{ github.sha }} .
+      - name: Build Docker image (no cache)
+        run: docker build --no-cache -t sentiment-api:${{ github.sha }} .
 
       - name: Smoke test container
         run: |
           set -euxo pipefail
-          docker run -d --rm -p 8000:8000 --name sa sentiment-api:${{ github.sha }}
-          # wait up to 60s for health
-          for i in $(seq 1 60); do curl -sf http://localhost:8000/health && break || sleep 1; done
-          # show logs and fail if still not healthy
-          curl -sf http://localhost:8000/health || (docker logs sa && exit 1)
-          # predict endpoint
+
+          # Run in background, map host 8000→container 8000
+          CID=$(docker run -d -p 8000:8000 sentiment-api:${{ github.sha }})
+
+          # Wait up to 60s for /health
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/health; then
+              echo "✅ Service healthy"
+              break
+            fi
+            sleep 1
+          done
+
+          # Final health check, or dump logs and fail
+          if ! curl -sf http://localhost:8000/health; then
+            echo "❌ Service never became healthy; container logs:"
+            docker logs "$CID" || true
+            exit 1
+          fi
+
+          # Hit predict
           curl -sf -X POST http://localhost:8000/predict \
             -H "Content-Type: application/json" \
             -d '{"texts":["great movie","terrible plot"]}'
-          docker stop sa
+
+          # Clean up
+          docker stop "$CID"
+
       # Uncomment if you use the evaluate stage
       # - name: Upload metrics
       #   uses: actions/upload-artifact@v4

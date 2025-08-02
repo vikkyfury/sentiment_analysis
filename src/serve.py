@@ -1,30 +1,39 @@
+# src/serve.py (Flask)
 import os
 from pathlib import Path
-from flask import Flask, request, jsonify
+from typing import List
+from flask import Flask, jsonify, request
 import mlflow.sklearn
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
+MODEL_DIR = ROOT_DIR / "models" / "latest"
 
-# Locate project root and MLflow runs folder
-BASE_DIR   = Path(__file__).parents[1]
-# Load vendored artifacts
-MODEL_PATH = BASE_DIR / "prod_model" / "model"
-VECT_PATH  = BASE_DIR / "prod_model" / "vectorizer"
-
-model      = mlflow.sklearn.load_model(str(MODEL_PATH))
-vectorizer = mlflow.sklearn.load_model(str(VECT_PATH))
-
+model = mlflow.sklearn.load_model(str(MODEL_DIR))
 app = Flask(__name__)
+
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "service": "sentiment-api",
+        "endpoints": {
+            "health": "/health",
+            "predict": "/predict"
+        }
+    })
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    data = request.get_json()
-    text = data.get("text", "")
-    # Vectorize and predict
-    vec  = vectorizer.transform([text])
-    pred = model.predict(vec)[0]
-    return jsonify({"prediction": int(pred)})
+    payload = request.get_json(silent=True) or {}
+    texts: List[str] = payload.get("texts")
+    if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
+        return jsonify({"error": "Request body must be JSON with key 'texts': List[str]."}), 400
+    preds = model.predict(texts)
+    return jsonify({"predictions": [int(p) for p in preds]})
 
 if __name__ == "__main__":
-    # Use PORT env var or default to 8000
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.getenv("PORT", 8000))
+    app.run(host="0.0.0.0", port=port, debug=True)
