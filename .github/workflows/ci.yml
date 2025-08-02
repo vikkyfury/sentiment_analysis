@@ -53,7 +53,17 @@ jobs:
           set -euxo pipefail
           dvc pull -v
           dvc checkout -v
-          dvc repro -v --force   # produces models/latest (and metrics.json if you added evaluate)
+          dvc repro -v --force   # produces models/latest and metrics.json
+
+      - name: Gate by metrics (F1 ≥ 0.95)
+        run: |
+          python - <<'PY'
+          import json, sys
+          m = json.load(open("metrics.json"))
+          f1 = float(m.get("f1_macro", 0))
+          print(f"f1_macro = {f1}")
+          sys.exit(0 if f1 >= 0.95 else 1)
+          PY
 
       - name: Run tests
         run: pytest -q
@@ -110,13 +120,18 @@ jobs:
           # Clean up
           docker stop "$CID"
 
-      # Uncomment if you use the evaluate stage
-      # - name: Upload metrics
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: metrics
-      #     path: metrics.json
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
-      # Optional: Docker build
-      # - name: Build Docker image
-      #   run: docker build -t sentiment-api:${{ github.sha }} .
+      - name: Push image to GHCR
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/sentiment-api:${{ github.sha }}
+          docker tag sentiment-api:${{ github.sha }} "$IMAGE"
+          docker push "$IMAGE"
+
+      - name: Tag latest on main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/sentiment-api
+          docker tag $IMAGE:${{ github.sha }} $IMAGE:latest
+          docker push $IMAGE:latest
