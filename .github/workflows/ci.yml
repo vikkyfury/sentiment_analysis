@@ -64,6 +64,12 @@ jobs:
           print(f"f1_macro = {f1}")
           sys.exit(0 if f1 >= 0.95 else 1)
           PY
+      - name: Promote to production model
+        run: |
+          set -euxo pipefail
+          # Copy latest into prod and push to your DVC remote
+          dvc repro promote
+          dvc push -v
 
       - name: Run tests
         run: pytest -q

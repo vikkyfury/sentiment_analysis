@@ -2,24 +2,31 @@ stages:
   ingest:
     cmd: python src/data_ingest.py
     deps:
-      - src/data_ingest.py
-      - data/raw
+    - src/data_ingest.py
+    - data/raw
     outs:
-      - data/processed/cleaned_data.csv
+    - data/processed/cleaned_data.csv
 
   train:
     cmd: python src/train.py
     deps:
-      - src/train.py
-      - data/processed/cleaned_data.csv
+    - src/train.py
+    - data/processed/cleaned_data.csv
     outs:
-      - models/latest
+    - models/latest
 
   evaluate:
-    cmd: python src/evaluate.py --model-dir models/latest --data data/processed/cleaned_data.csv --out metrics.json
+    cmd: python src/evaluate.py --model-dir models/latest --data 
+      data/processed/cleaned_data.csv --out metrics.json
     deps:
-      - src/evaluate.py
-      - models/latest
-      - data/processed/cleaned_data.csv
+    - src/evaluate.py
+    - models/latest
+    - data/processed/cleaned_data.csv
     metrics:
-      - metrics.json
+    - metrics.json
+  promote:
+    cmd: cp -r models/latest models/prod
+    deps:
+    - models/latest
+    outs:
+    - models/prod

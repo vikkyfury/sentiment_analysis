@@ -56,3 +56,17 @@ stages:
       hash: md5
       md5: c75909fb15d1e0dfddc62a334891b421
       size: 89
+  promote:
+    cmd: cp -r models/latest models/prod
+    deps:
+    - path: models/latest
+      hash: md5
+      md5: 9a689ec76d4d10f7cbce299d8a9c6609.dir
+      size: 224076
+      nfiles: 5
+    outs:
+    - path: models/prod
+      hash: md5
+      md5: 9a689ec76d4d10f7cbce299d8a9c6609.dir
+      size: 224076
+      nfiles: 5
