@@ -121,7 +121,8 @@ jobs:
           docker stop "$CID"
 
       - name: Log in to GHCR
-        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+        run: echo "${{ secrets.GHCR_TOKEN }}" \
+          | docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
 
       - name: Push image to GHCR
         run: |
